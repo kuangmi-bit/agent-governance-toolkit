@@ -433,9 +433,9 @@ impl NativeRuntime {
 }
 
 /// Build URL fetch limits from optional overrides, mirroring the FFI setter.
-/// `None` keeps the built in default for `max_bytes` and `timeout_ms`;
-/// `max_redirects` defaults to the built in value when `None` and is applied as
-/// given otherwise, so `Some(0)` forbids redirects.
+/// `None` keeps the built in default for `max_bytes` and `timeout_ms`. The
+/// `max_redirects` argument is accepted for API compatibility but has no
+/// effect on URL sourcing, which always forces the redirect budget to zero.
 fn url_fetch_limits(
     max_bytes: Option<u64>,
     timeout_ms: Option<u64>,

@@ -105,11 +105,13 @@ an internal HTTPS server by IP.
 | `https://localhost:8443/manifest.yaml` (local testing) | load the file with `from_path`, or serve it under a public name |
 
 The guard still checks only the URL a caller passes. It does not resolve
-hostnames and it does not re-check redirect hops; set the redirect limit to
-zero (`Limits::max_manifest_url_redirects` in Rust, `max_url_redirects=0` in
-Python, `maxRedirects: 0` in Node) if the guard must hold across redirects.
-The C ABI `acs_builder_from_url` fetches with the default budget and cannot
-lower it yet. See `policy-engine/docs/acs-retarget.md`.
+hostnames and it does not re-check redirect hops. Redirects on a URL-sourced
+manifest are always disabled in `manifest_from_url`, in the SDK `from_url`
+methods, and in the C ABI `acs_builder_from_url`, all of which force the
+redirect budget to zero. The `max_url_redirects` (Python) and `maxRedirects`
+(Node) arguments, and the `Limits::max_manifest_url_redirects` field, now
+have no effect on URL sourcing and no longer need to be set. See
+`policy-engine/docs/acs-retarget.md`.
 
 ---
 

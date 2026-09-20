@@ -318,11 +318,15 @@ What the guard does not do, all of it the same upstream gap as issue #20:
   intercept a hop, so a vetted public URL can redirect to a blocked address.
   The pre-retarget engine followed redirects itself and re-ran each hop through
   the guard. Because the pinned engine cannot re-validate a hop,
-  `manifest_from_url` fails closed by zeroing the redirect budget, so a
-  redirecting URL is refused rather than followed; the `max_url_redirects`
-  (Python) and `maxRedirects` (Node) arguments now have no effect on URL
-  sourcing. A direct 2xx URL still loads. Re-enabling redirects needs the
-  upstream per-hop hook (issue #20), not an AGT-side bypass.
+  `manifest_from_url` fails closed by zeroing the redirect budget. A
+  redirecting URL is not followed. `ureq` returns the 3xx response instead of
+  following it and the upstream fetcher only rejects status codes of 400 and
+  above, so the 3xx body reaches the SHA-256 check and the manifest YAML parse
+  and fails there; the redirect target is never contacted, so the hop is
+  closed. The `max_url_redirects` (Python) and `maxRedirects` (Node) arguments
+  now have no effect on URL sourcing. A direct 2xx URL still loads.
+  Re-enabling redirects needs the upstream per-hop hook (issue #20), not an
+  AGT-side bypass.
 - A nested `extends` URL inside the fetched manifest resolves through the
   upstream loader with no destination check at all.
 

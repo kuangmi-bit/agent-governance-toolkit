@@ -244,10 +244,14 @@ fn reject_blocked_fetch_host(url: &str) -> Result<(), RuntimeError> {
 /// guard and exposes no hook to intercept a hop, so a vetted public URL can
 /// bounce the fetch to a blocked address that the guard would have refused.
 /// The pinned engine therefore cannot re-validate each redirect hop, and the
-/// only fail-closed option is to not follow redirects at all: zero the
-/// redirect budget. A direct (non-redirecting) URL is unaffected because a
-/// budget of zero still loads a 2xx response. Tracked upstream in
-/// responsibleai/agent-control-spec#20.
+/// only fail-closed option is to not follow redirects at all, so this zeroes
+/// the redirect budget. A zero budget makes `ureq` return the 3xx response
+/// instead of following it. `ureq` never raises a redirect error at this
+/// budget, the upstream fetcher only rejects status codes of 400 and above,
+/// so the 3xx body reaches the SHA-256 check and the manifest YAML parse and
+/// fails there, and the redirect target is never contacted. A direct
+/// (non-redirecting) URL is unaffected because a zero budget still loads a
+/// 2xx response. Tracked upstream in responsibleai/agent-control-spec#20.
 fn fail_closed_url_fetch_limits(mut limits: Limits) -> Limits {
     limits.max_manifest_url_redirects = 0;
     limits
@@ -264,10 +268,13 @@ fn fail_closed_url_fetch_limits(mut limits: Limits) -> Limits {
 /// The guard covers the URL passed here and nothing deeper. The upstream
 /// fetcher follows redirects inside its HTTP client without re-checking each
 /// hop and exposes no hook to intercept them, so this function zeroes the
-/// redirect budget ([`fail_closed_url_fetch_limits`]) and a redirecting URL
-/// fails closed rather than bouncing the fetch to an unchecked host. A
-/// nested `extends` URL inside the fetched manifest is resolved by the
-/// upstream loader with no destination check (upstream issue #20).
+/// redirect budget ([`fail_closed_url_fetch_limits`]). A redirecting URL is
+/// not followed. `ureq` returns the 3xx response instead of following it and
+/// the upstream fetcher only rejects status codes of 400 and above, so the
+/// 3xx body reaches the SHA-256 check and the manifest YAML parse and fails
+/// there, and the redirect target is never contacted. A nested `extends` URL
+/// inside the fetched manifest is resolved by the upstream loader with no
+/// destination check (upstream issue #20).
 pub fn manifest_from_url(
     url: &str,
     sha256: Option<&str>,
