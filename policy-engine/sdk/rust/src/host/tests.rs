@@ -1202,9 +1202,11 @@ fn manifest_from_url_forces_redirects_off() {
     // bounce the fetch to a blocked address. `manifest_from_url` must
     // therefore refuse to follow any redirect hop. A direct 2xx URL is
     // unaffected because a zero redirect budget still loads the response.
-    let mut limits = Limits::default();
-    limits.max_manifest_url_redirects = 9;
-    limits.max_manifest_url_bytes = 2048;
+    let limits = Limits {
+        max_manifest_url_redirects: 9,
+        max_manifest_url_bytes: 2048,
+        ..Default::default()
+    };
 
     let effective = super::fail_closed_url_fetch_limits(limits);
 
